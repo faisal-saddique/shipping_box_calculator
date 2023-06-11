@@ -1,0 +1,7 @@
+.stButton > button {
+    background-color: aqua;
+}
+
+.element-container:nth-of-type(3) button {
+            height: 3em;
+        }
