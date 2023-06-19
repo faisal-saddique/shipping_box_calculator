@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils import convert_data_to_products
+from streamlit_extras.switch_page_button import switch_page
 
 with open('assets/style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
@@ -69,7 +70,7 @@ def main():
                             "WIDTH": item_dimensions[1],
                             "HEIGHT": item_dimensions[2],
                             "WEIGHT": item_weight,
-                            "QTY": item_qnt,
+                            "QTY": 1 if item_qnt is None else item_qnt,
                             "ROTATION OK": item_rotation,
                         }
 
@@ -81,10 +82,18 @@ def main():
 
         items_df_for_verification = get_selected_items(items_df_edited=items_df_edited,library_products=library_products)
 
+        st.subheader("REVIEW")
         st.dataframe(items_df_for_verification,use_container_width=True)
         st.session_state["final_items"] = convert_data_to_products(items_df_for_verification.to_dict())
-        for item in st.session_state["final_items"]:
-            st.write(item)
+        # for item in st.session_state["final_items"]:
+        #     st.write(item)
+        st.session_state["items_selected"] = True
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write()
+        with col2:    
+            if st.button("Select Boxes", use_container_width=True):
+                switch_page("Find A Box Size")
     else:
         st.warning("Please enter the products first in the library!")
 

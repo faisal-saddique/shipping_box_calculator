@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils import convert_data_to_boxes
 from streamlit_extras.switch_page_button import switch_page
+from streamlit_extras.switch_page_button import switch_page
 
 with open('assets/style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
@@ -20,11 +21,13 @@ def main():
     with col3:
         colA, colB, colC = st.columns(3)
         with colA:
-            length = st.number_input(f"L", value=0, step=1)
+            length = st.number_input(f"L", value=25, step=1)
         with colB:
-            width = st.number_input(f"W", value=0, step=1)
+            width = st.number_input(f"W", value=25, step=1)
         with colC:
-            height = st.number_input(f"H", value=0, step=1)
+            height = st.number_input(f"H", value=25, step=1)
+
+        st.session_state["maximum_dimensions"] = (length,width,height)
 
     if "library_boxes" in st.session_state:
         library_boxes = st.session_state["library_boxes"]
@@ -91,14 +94,21 @@ def main():
             return box_df_for_display
 
         box_df_for_verification = get_selected_items(box_df_edited=box_df_edited,library_boxes=library_boxes)
-
+        st.subheader("REVIEW")
         st.dataframe(box_df_for_verification,use_container_width=True)
         st.session_state["final_boxes"] = convert_data_to_boxes(box_df_for_verification.to_dict())
         # for box in st.session_state["final_boxes"]:
         #     st.write(box)
-        if st.button("Calculate"):
-            switch_page("Packing Manifest")
+        st.session_state["boxes_selected"] = True
 
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("Change Items",use_container_width=True):
+                switch_page("Pack A Shipment")
+        with col2:
+            if st.button("Calculate",use_container_width=True):
+                switch_page("Packing Manifest")
     else:
         st.warning("Please enter the Boxes first in the library!")
 

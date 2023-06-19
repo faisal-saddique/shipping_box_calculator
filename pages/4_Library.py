@@ -47,7 +47,7 @@ with tab2:
 
 
     try:
-        st.write(updated_shipping_boxes_df.to_dict())
+        # st.write(updated_shipping_boxes_df.to_dict())
         st.session_state["library_boxes"] = create_boxes_from_library(updated_shipping_boxes_df.to_dict())
 
 

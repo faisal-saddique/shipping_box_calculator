@@ -12,14 +12,55 @@ class Product:
     def __str__(self):
         return f"Product: {self.sku}, Dimensions: {self.dimensions}, Weight: {self.weight}, Quantity: {self.quantity}, Rotation: {self.rotation}"
 
+    def volume(self):
+        return self.dimensions[0] * self.dimensions[1] * self.dimensions[2]
+
 class Box:
     def __init__(self, dimensions, max_weight=45):
         self.dimensions = dimensions  # (length, width, height)
         self.max_weight = max_weight
-        self.utilized_weight = 0
+        self.current_weight = 0
+        self.items = []
 
     def __str__(self):
-        return f"Box: {self.dimensions}, Max weight: {self.max_weight}, Utilized weight: {self.utilized_weight}"
+        description = f"Box: {self.dimensions}, Max weight: {self.max_weight}, Utilized weight: {self.current_weight}"
+        items = {}
+        for item in self.items:
+            if item.sku not in items.keys():
+                items[item.sku] = 1
+            else:
+                items[item.sku] += 1
+
+        description = description + f" Items packed: {items}"
+        return description
+
+    def can_fit(self, item, padding=(0, 0, 0)):
+        remaining_volume = self.volume(padding) - sum(item.volume() for item in self.items)
+        return (
+            self.current_weight + item.weight <= self.max_weight
+            and remaining_volume >= item.volume()
+        )
+
+
+    def add_item(self, item):
+        self.items.append(item)
+        self.current_weight += item.weight
+
+    def volume(self, padding=(0, 0, 0)):
+        padded_length = self.dimensions[0] - 2 * padding[2]
+        padded_width = self.dimensions[1] - 2 * padding[2]
+        padded_height = self.dimensions[2] - padding[0] - padding[1]
+        return padded_length * padded_width * padded_height
+
+    def get_accom_items(self):
+        items = {}
+        for item in self.items:
+            if item.sku not in items.keys():
+                items[item.sku] = 1
+            else:
+                items[item.sku] += 1
+        # print(items)
+        return items
 
 def convert_data_to_boxes(parsed_data):
     boxes = []
@@ -42,13 +83,14 @@ def convert_data_to_products(parsed_data):
                 parsed_data["HEIGHT"][i]
             ),
             weight=parsed_data["WEIGHT"][i],
-            quantity=int(parsed_data["QTY"][i]),
+            quantity=int(parsed_data["QTY"][i]) if parsed_data["QTY"][i] else 1,
             rotation=bool(parsed_data["ROTATION OK"][i])
         )
         for i in parsed_data["SKU"]
     ]
 
     return products
+
 
 def create_products_from_library(data):
     products = []
@@ -98,8 +140,6 @@ def create_boxes_from_library(data):
         boxes.append(box)
 
     return boxes
-
-
 
 def box_volume(box):
     return box.dimensions[0] * box.dimensions[1] * box.dimensions[2]
