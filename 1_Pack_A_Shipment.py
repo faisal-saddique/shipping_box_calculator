@@ -1,22 +1,28 @@
 import streamlit as st
 import pandas as pd
-from utils import convert_data_to_products
+from utils import convert_data_to_products, get_selected_items, skip_sub_data_frame_loadups
 from streamlit_extras.switch_page_button import switch_page
+from random import randint
+import json
+
+if "allow_first_time_load_page_1" not in st.session_state:
+    st.session_state["allow_first_time_load_page_1"] = True
+
+skip_sub_data_frame_loadups(1)
 
 with open('assets/style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-
 def main():
     st.header("PACK A SHIPMENT")
-    st.write("New box size - not based on what's available in the library")
 
+    st.markdown("*Box sizes are determined from your library of available boxes*")
 
     col1, col2 = st.columns([0.3,0.7])
     with col1:
-        length = st.number_input(f"ORDER NUMBER", value=0, step=1)
+        length = st.text_input(f"ORDER NUMBER")
     with col2:
-        orient_choice = st.selectbox("CALCULATION MODE",["EQUALIZE WEIGHT IF MULTIPLE BOXES NEEDED","UTILIZE ALL SPACE IN FIRST BOX IF MULTIPLE BOXES ARE NEEDED"])
+        orient_choice = st.selectbox("CALCULATION MODE",["EQUALIZE WEIGHT (lbs) IF MULTIPLE BOXES NEEDED","UTILIZE ALL SPACE IN FIRST BOX IF MULTIPLE BOXES ARE NEEDED"])
 
     if "library_products" in st.session_state:
         library_products = st.session_state["library_products"]
@@ -24,23 +30,41 @@ def main():
         # for products in library_products:
         #     st.write(products)
 
-        items_df = pd.DataFrame(
-            [
-                {
-                    "SKU": "",
-                    "QTY": None,
-                    "ROTATION OK": False,
-                },
-            ],
-        )
+        if "final_items" in st.session_state and st.session_state["final_items"] and st.session_state["allow_first_time_load_page_1"]:
+            # st.error(f"inside {randint(0,45)}")
+            
+            st.session_state["allow_first_time_load_page_1"] = False
 
+            products = []
+            for product in st.session_state["final_items"]:
+                # st.write(product)
+                obj = {}
+                obj["SKU"]=product.sku
+                obj["QTY"]=product.quantity
+                obj["ROTATION OK"]=product.rotation
+                products.append(obj)
+            st.session_state["items_df"] = pd.DataFrame(products)
+            # st.write(items_df)
+        if "items_df" not in st.session_state:      
+            st.session_state["items_df"] = pd.DataFrame(
+                [
+                    {
+                        "SKU": "",
+                        "QTY": None,
+                        "ROTATION OK": False,
+                    },
+                ],
+            )
+    
+        st.markdown("**ITEMS TO PACK**")
+        st.markdown("*Select the items from your library to be included in the shipment.*")
         items_df_edited = st.data_editor(
-            items_df,
+            st.session_state["items_df"],
             num_rows="dynamic",
             use_container_width=True,
             column_config={
                 "SKU": st.column_config.SelectboxColumn(
-                    "Products",
+                    "SKU",
                     help="The products as described in the library",
                     width="medium",
                     options=[
@@ -51,49 +75,26 @@ def main():
             hide_index=True,
         )
 
-        # st.json(items_df_edited.to_dict())
-
-        items_df_for_verification = []
-
-        def get_selected_items(items_df_edited, library_products):
-            items_df_for_display = pd.DataFrame(columns=["SKU", "LENGTH", "WIDTH", "HEIGHT", "WEIGHT", "QTY", "ROTATION OK"])
-
-            for item_sku, item_qnt, item_rotation in zip(items_df_edited["SKU"], items_df_edited["QTY"], items_df_edited["ROTATION OK"]):
-                for prod in library_products:
-                    if prod.sku == item_sku:
-                        item_dimensions = prod.dimensions
-                        item_weight = prod.weight
-
-                        item_data = {
-                            "SKU": item_sku,
-                            "LENGTH": item_dimensions[0],
-                            "WIDTH": item_dimensions[1],
-                            "HEIGHT": item_dimensions[2],
-                            "WEIGHT": item_weight,
-                            "QTY": 1 if item_qnt is None else item_qnt,
-                            "ROTATION OK": item_rotation,
-                        }
-
-                        # st.write(item_data)
-                        items_df_for_display = items_df_for_display = pd.concat([items_df_for_display, pd.DataFrame(item_data, index=[0])], ignore_index=True)
-                        break
-
-            return items_df_for_display
+        # items_df_for_verification = []
 
         items_df_for_verification = get_selected_items(items_df_edited=items_df_edited,library_products=library_products)
+        # st.write(items_df_for_verification.to_dict())
+        st.markdown("**REVIEW**")
+        st.table(items_df_for_verification)
 
-        st.subheader("REVIEW")
-        st.dataframe(items_df_for_verification,use_container_width=True)
+        
         st.session_state["final_items"] = convert_data_to_products(items_df_for_verification.to_dict())
+        
         # for item in st.session_state["final_items"]:
         #     st.write(item)
+
         st.session_state["items_selected"] = True
         col1, col2 = st.columns(2)
         with col1:
             st.write()
         with col2:    
-            if st.button("Select Boxes", use_container_width=True):
-                switch_page("Find A Box Size")
+            if st.button("PACK SHIPMENT", use_container_width=True):
+                switch_page("PACKING MANIFEST")
     else:
         st.warning("Please enter the products first in the library!")
 

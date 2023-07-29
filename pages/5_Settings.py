@@ -1,6 +1,11 @@
 import streamlit as st
 import pandas as pd
 import json
+from utils import skip_sub_data_frame_loadups
+
+skip_sub_data_frame_loadups(5)
+
+pass_key = True
 
 def rename_key(json_obj, old_key, new_key):
     if isinstance(json_obj, dict):
@@ -18,12 +23,31 @@ def rename_key(json_obj, old_key, new_key):
         return new_obj
     else:
         return json_obj
-    
-df = pd.DataFrame(
-    [
-       {"PADDING ON TOP (in)": 2, "PADDING ON BOTTOM (in)": 2, "PADDING ON SIDES (in)": 2, "MAX BOX WEIGHT (lbs)":45},
-   ]
-)
+
+if "settings" in st.session_state and st.session_state["settings"] and pass_key:
+    pass_key = False
+    # st.success("yes")
+    df = pd.DataFrame(
+        [
+        {
+            "PADDING ON TOP (in)": st.session_state["settings"]["top_padding"], 
+            "PADDING ON BOTTOM (in)": st.session_state["settings"]["bottom_padding"], 
+            "PADDING ON SIDES (in)": st.session_state["settings"]["sides_padding"], 
+            "MAX BOX WEIGHT (lbs)":st.session_state["settings"]["max_box_weight"]
+            },
+        ]
+    )
+else:
+    df = pd.DataFrame(
+        [
+        {
+            "PADDING ON TOP (in)": 0, 
+            "PADDING ON BOTTOM (in)": 0, 
+            "PADDING ON SIDES (in)": 0, 
+            "MAX BOX WEIGHT (lbs)":45
+            },
+        ]
+    )
 
 st.header("SETTINGS")
 
@@ -45,4 +69,4 @@ data = rename_key(data, "MAX BOX WEIGHT (lbs)", "max_box_weight")
 
 st.session_state["settings"] = data
 
-# st.json(st.session_state["settings"])
+st.json(st.session_state["settings"])

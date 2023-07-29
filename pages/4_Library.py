@@ -1,24 +1,25 @@
 import streamlit as st
 import pandas as pd
-from utils import create_products_from_library, create_boxes_from_library
-from uuid import uuid4
+from utils import create_products_from_library, create_boxes_from_library, skip_sub_data_frame_loadups
+
+skip_sub_data_frame_loadups(4)
+
 def insert_empty_lines(lines):
    for i in range(0,lines):
       st.write("")
 
 products_df = pd.DataFrame(
     [
-       {"SKU": "Planner", "LENGTH (in)": 7.25, "WIDTH":7.25, "HEIGHT": 0.75,"WEIGHT (lbs)": .5},
-       {"SKU": "Large Notepad", "LENGTH (in)": 8.5, "WIDTH":11, "HEIGHT": 0.25,"WEIGHT (lbs)": .3},
-       {"SKU": "Small Notepad", "LENGTH (in)": 4.25, "WIDTH":5.5, "HEIGHT": .25,"WEIGHT (lbs)": .1},
-       {"SKU": "Greeting Card", "LENGTH (in)": 4.25, "WIDTH":5.5, "HEIGHT": 0.03125,"WEIGHT (lbs)": .01},
+       {"SKU": "Planner", "LENGTH (In)": 7.25, "WIDTH (In)":7.25, "HEIGHT (In)": 0.75,"WEIGHT (lbs)": .5},
+       {"SKU": "Large Notepad", "LENGTH (In)": 8.5, "WIDTH (In)":11, "HEIGHT (In)": 0.25,"WEIGHT (lbs)": .3},
+       {"SKU": "Small Notepad", "LENGTH (In)": 4.25, "WIDTH (In)":5.5, "HEIGHT (In)": .25,"WEIGHT (lbs)": .1},
+       {"SKU": "Greeting Card", "LENGTH (In)": 4.25, "WIDTH (In)":5.5, "HEIGHT (In)": 0.03125,"WEIGHT (lbs)": .01},
    ]
 )
 
 shipping_boxes_df = pd.DataFrame(
     [
-       {"BOX SIZE": "10x10x10", "LENGTH (in)": 10, "WIDTH":10, "HEIGHT": 10, "MAXIMUM WEIGHT":45},
-       {"BOX SIZE": "10x10x10", "LENGTH (in)": 20, "WIDTH":20, "HEIGHT": 20, "MAXIMUM WEIGHT":45},
+       {"BOX SIZE": "10x10x10", "LENGTH (In)": 10, "WIDTH (In)":10, "HEIGHT (In)": 10, "MAXIMUM WEIGHT":45},
    ]
 )
 
@@ -49,7 +50,7 @@ with tab2:
     try:
         # st.write(updated_shipping_boxes_df.to_dict())
         st.session_state["library_boxes"] = create_boxes_from_library(updated_shipping_boxes_df.to_dict())
-
+        st.write(st.session_state["library_boxes"])
 
         st.success(f"Updated the boxes collection.")
 
